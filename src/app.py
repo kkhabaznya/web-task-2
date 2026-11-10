@@ -99,8 +99,6 @@ def add_message():
                 status=500,
                 body=f"CLI execution failed: {e.stderr.decode('utf-8')}",
             )
-    else:
-        print(f"[TEST MODE] Пропущен вызов CLI для данных: {data_val}")
 
     uid = get_next_uid("message")
     created = int(datetime.now().timestamp())
@@ -216,9 +214,7 @@ def load_seed_data(filepath: str):  # pragma: no cover
 
 
 if __name__ == "__main__":  # pragma: no cover
-    parser = argparse.ArgumentParser(
-        description="HTTP API Server for Variant 28"
-    )
+    parser = argparse.ArgumentParser()
     parser.add_argument("--test-mode", action="store_true")
     parser.add_argument("--seed-file", type=str, default=None)
     args = parser.parse_args()
