@@ -1,0 +1,26 @@
+{
+  "clients": [
+    {"user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+    {"user_agent": "curl/7.81.0"},
+    {"user_agent": "PostmanRuntime/7.36.0"}
+  ],
+  "messages": [
+    {"data": "print('hello')", "client": 1, "description": "greeting",
+     "tags": "python,hello", "stage": "done", "age_sec": 30},
+
+    {"data": "1+2*3", "client": 1, "description": "math expr",
+     "tags": "math,expr", "stage": "done", "age_sec": 120},
+
+    {"data": "SELECT 1", "client": 2, "description": "old SQL",
+     "tags": "sql", "stage": "done", "age_sec": 600},
+
+    {"data": "sorted([3,1,2])", "client": 3, "description": "no feedback yet",
+     "tags": "sort", "stage": "done", "age_sec": 60}
+  ],
+  "feedbacks": [
+    {"response": "OK: hello world",  "message": 1},
+    {"response": "OK: 7",            "message": 2},
+    {"response": "OK: 1 (old)",      "message": 3},
+    {"response": "OK: 2",      	     "message": 4}
+  ]
+}
