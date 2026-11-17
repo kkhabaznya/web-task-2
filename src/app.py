@@ -116,11 +116,6 @@ def add_message():
     result = ""
     if not test_mode:
         result = execute_task(data_val)
-        print(
-            f"add-message: задача {data_val!r} -> "
-            f"результат main.py: {result!r}",
-            flush=True,
-        )
 
     uid = get_next_uid("message")
     created = int(datetime.now().timestamp())
@@ -135,16 +130,6 @@ def add_message():
         "stage": stage,
     }
     messages.append(message)
-
-    if not test_mode:
-        feedback_uid = get_next_uid("feedback")
-        feedback = {
-            "uid": feedback_uid,
-            "created": int(datetime.now().timestamp()),
-            "response": f"OK: {result}",
-            "message": uid,
-        }
-        feedbacks.append(feedback)
 
     response.content_type = "application/json"
     return json.dumps(message)
