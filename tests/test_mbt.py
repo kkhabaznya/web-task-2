@@ -182,7 +182,7 @@ def test_subprocess_success(data):
     app.TEST_MODE = False
     try:
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
+            mock_run.return_value = MagicMock(returncode=0, stdout=b"7")
             r = requests.post(
                 f"http://127.0.0.1:8080/rest/api/v2/add-message?data={data}&client={cid}",
                 headers={

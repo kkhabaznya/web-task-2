@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 setlocal
 
 set "BASE_URL=http://127.0.0.1:8080"
@@ -39,17 +38,17 @@ curl -v -H "Accept-Language: ru-RU" %BASE_URL%/rest/api/v2/collect-report
 echo .
 echo .
 
-echo 8. ОШИБКА 415: POST без Content-Type
+echo 8. ERROR 415: POST without Content-Type
 curl -i -X POST -H "Accept-Language: ru-RU" "%BASE_URL%/rest/api/v2/add-client?user_agent=x"
 echo .
 echo .
 
-echo 9. ОШИБКА 406: GET без Accept-Language
+echo 9. ERROR 406: GET without Accept-Language
 curl -i %BASE_URL%/rest/api/v2/collect-client
 echo .
 echo .
 
-echo 10. ОШИБКА 406: GET с Accept-Language: en
+echo 10. ERROR 406: GET with Accept-Language: en
 curl -i -H "Accept-Language: en" %BASE_URL%/rest/api/v2/collect-client
 
 pause

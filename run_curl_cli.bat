@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set BASE_URL=http://127.0.0.1:8080
@@ -7,20 +6,20 @@ set TMP_BODY=%TEMP%\api_body.json
 
 :menu
 cls
-echo   Сервер: %BASE_URL%
+echo   Server: %BASE_URL%
 echo ==================================================
-echo   1. POST  /add-client               -- создать клиента
-echo   2. GET   /collect-client           -- список клиентов
-echo   3. PUT   /revise-client/:uid       -- изменить клиента
-echo   4. POST  /add-message              -- создать сообщение
-echo   5. GET   /collect-message/:client  -- список сообщений
-echo   6. PUT   /revise-message/:uid      -- изменить сообщение
-echo   7. GET   /collect-feedback/:msg    -- список фидбеков
-echo   8. GET   /collect-report           -- отчёт
-echo   9. Пингануть сервер
-echo   0. Выход
+echo   1. POST  /add-client               -- create client
+echo   2. GET   /collect-client           -- list clients
+echo   3. PUT   /revise-client/:uid       -- revise client
+echo   4. POST  /add-message              -- create message
+echo   5. GET   /collect-message/:client  -- list messages
+echo   6. PUT   /revise-message/:uid      -- revise message
+echo   7. GET   /collect-feedback/:msg    -- list feedbacks
+echo   8. GET   /collect-report           -- report
+echo   9. Ping the server
+echo   0. Exit
 echo ==================================================
-set /p choice="Выбор: "
+set /p choice="Choice: "
 
 if "%choice%"=="1" goto add_client
 if "%choice%"=="2" goto collect_client
@@ -33,28 +32,29 @@ if "%choice%"=="8" goto collect_report
 if "%choice%"=="9" goto ping
 if "%choice%"=="0" exit /b 0
 
-echo Неверный выбор.
+echo Invalid choice.
 pause
 goto menu
 
 :add_client
 cls
-echo --- 1. Создать клиента ---
+echo --- 1. Create client ---
 set /p ua="User-Agent [unknown]: "
 if "%ua%"=="" set ua=unknown
 echo.
 echo ^>^> POST %BASE_URL%/rest/api/v2/add-client
 echo.
 curl -s -X POST -H "Accept-Language: ru-RU" -H "Content-Type: application/json" ^
-    "%BASE_URL%/rest/api/v2/add-client?user_agent=%ua%" | python -m json.tool --no-ensure-ascii
+    --get "%BASE_URL%/rest/api/v2/add-client" ^
+    --data-urlencode "user_agent=%ua%" | python -m json.tool --no-ensure-ascii
 echo.
 pause
 goto menu
 
 :collect_client
 cls
-echo --- 2. Список клиентов ---
-set /p uid="UID (пусто = все): "
+echo --- 2. List clients ---
+set /p uid="UID (empty = all): "
 if "%uid%"=="" (
     set "url=%BASE_URL%/rest/api/v2/collect-client"
 ) else (
@@ -70,11 +70,11 @@ goto menu
 
 :revise_client
 cls
-echo --- 3. Изменить клиента ---
-set /p uid="UID клиента: "
-echo Пример тела: {"user_agent":"NewAgent"}
+echo --- 3. Revise client ---
+set /p uid="Client UID: "
+echo Example body: {"user_agent":"NewAgent"}
 set /p body="JSON: "
-echo %body% > "%TMP_BODY%"
+echo %body%> "%TMP_BODY%"
 echo.
 echo ^>^> PUT %BASE_URL%/rest/api/v2/revise-client/%uid%
 echo.
@@ -86,10 +86,10 @@ goto menu
 
 :add_message
 cls
-echo --- 4. Создать сообщение ---
-set /p client="client (UID клиента): "
+echo --- 4. Create message ---
+set /p client="client (client UID): "
 if "%client%"=="" (
-    echo [ERROR] client обязателен.
+    echo [ERROR] client is required.
     pause
     goto menu
 )
@@ -102,7 +102,12 @@ echo.
 echo ^>^> POST %BASE_URL%/rest/api/v2/add-message
 echo.
 curl -s -X POST -H "Accept-Language: ru-RU" -H "Content-Type: application/json" ^
-    "%BASE_URL%/rest/api/v2/add-message?data=%data%&client=%client%&description=%desc%&tags=%tags%&stage=%stage%" ^
+    --get "%BASE_URL%/rest/api/v2/add-message" ^
+    --data-urlencode "data=%data%" ^
+    --data-urlencode "client=%client%" ^
+    --data-urlencode "description=%desc%" ^
+    --data-urlencode "tags=%tags%" ^
+    --data-urlencode "stage=%stage%" ^
     | python -m json.tool --no-ensure-ascii
 echo.
 pause
@@ -110,9 +115,9 @@ goto menu
 
 :collect_message
 cls
-echo --- 5. Список сообщений ---
-set /p client="UID клиента: "
-set /p stage="stage (пусто = все): "
+echo --- 5. List messages ---
+set /p client="Client UID: "
+set /p stage="stage (empty = all): "
 if "%stage%"=="" (
     set "url=%BASE_URL%/rest/api/v2/collect-message/%client%"
 ) else (
@@ -128,11 +133,11 @@ goto menu
 
 :revise_message
 cls
-echo --- 6. Изменить сообщение ---
-set /p uid="UID сообщения: "
-echo Пример тела: {"stage":"done"}
+echo --- 6. Revise message ---
+set /p uid="Message UID: "
+echo Example body: {"stage":"done"}
 set /p body="JSON: "
-echo %body% > "%TMP_BODY%"
+echo %body%> "%TMP_BODY%"
 echo.
 echo ^>^> PUT %BASE_URL%/rest/api/v2/revise-message/%uid%
 echo.
@@ -144,8 +149,8 @@ goto menu
 
 :collect_feedback
 cls
-echo --- 7. Список фидбеков ---
-set /p msg="UID сообщения: "
+echo --- 7. List feedbacks ---
+set /p msg="Message UID: "
 echo.
 echo ^>^> GET %BASE_URL%/rest/api/v2/collect-feedback/%msg%
 echo.
@@ -156,7 +161,7 @@ goto menu
 
 :collect_report
 cls
-echo --- 8. Отчёт ---
+echo --- 8. Report ---
 echo ^>^> GET %BASE_URL%/rest/api/v2/collect-report
 echo.
 curl -s -H "Accept-Language: ru-RU" "%BASE_URL%/rest/api/v2/collect-report" | python -m json.tool --no-ensure-ascii
@@ -166,13 +171,13 @@ goto menu
 
 :ping
 cls
-echo --- 9. Проверка сервера ---
+echo --- 9. Check server ---
 curl -s -o nul -w "HTTP %%{http_code}\n" -H "Accept-Language: ru-RU" "%BASE_URL%/rest/api/v2/collect-client"
 if errorlevel 1 (
-    echo [ERROR] Сервер недоступен по адресу %BASE_URL%.
-    echo Запустите run_server.bat.
+    echo [ERROR] Server is not reachable at %BASE_URL%.
+    echo Run run_server.bat first.
 ) else (
-    echo [OK] Сервер отвечает.
+    echo [OK] Server responds.
 )
 pause
 goto menu

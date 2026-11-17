@@ -1,9 +1,9 @@
 import json
-import time
 import subprocess
 import sys
 import argparse
 import os
+import tempfile
 from datetime import datetime
 from bottle import Bottle, request, response, run, HTTPResponse
 
@@ -16,6 +16,8 @@ messages = []
 feedbacks = []
 
 uid_counters = {"client": 1, "message": 1, "feedback": 1}
+
+MAIN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "main.py")
 
 
 def get_next_uid(entity_type):
@@ -74,6 +76,31 @@ def revise_client(uid):
     raise HTTPResponse(status=404, body="Client not found")
 
 
+def execute_task(data: str) -> str:
+    task_file = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    )
+    try:
+        task_file.write(data)
+        task_file.close()
+
+        try:
+            process = subprocess.run(
+                [sys.executable, MAIN_PATH, task_file.name],
+                capture_output=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise HTTPResponse(
+                status=500,
+                body=f"CLI execution failed: {e.stderr.decode('utf-8')}",
+            )
+
+        return process.stdout.decode("utf-8").strip()
+    finally:
+        os.remove(task_file.name)
+
+
 @app.post("/rest/api/v2/add-message")
 def add_message():
     data_val = request.query.get("data", "")
@@ -86,19 +113,14 @@ def add_message():
         raise HTTPResponse(status=400, body="Missing client id")
     client_id = int(client_id)
 
+    result = ""
     if not TEST_MODE:
-        try:
-            process = subprocess.run(
-                [sys.executable, "main.py"],
-                input=data_val.encode("utf-8"),
-                capture_output=True,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise HTTPResponse(
-                status=500,
-                body=f"CLI execution failed: {e.stderr.decode('utf-8')}",
-            )
+        result = execute_task(data_val)
+        print(
+            f"add-message: задача {data_val!r} -> "
+            f"результат main.py: {result!r}",
+            flush=True,
+        )
 
     uid = get_next_uid("message")
     created = int(datetime.now().timestamp())
@@ -113,6 +135,16 @@ def add_message():
         "stage": stage,
     }
     messages.append(message)
+
+    if not TEST_MODE:
+        feedback_uid = get_next_uid("feedback")
+        feedback = {
+            "uid": feedback_uid,
+            "created": int(datetime.now().timestamp()),
+            "response": f"OK: {result}",
+            "message": uid,
+        }
+        feedbacks.append(feedback)
 
     response.content_type = "application/json"
     return json.dumps(message)
