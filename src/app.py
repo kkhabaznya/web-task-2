@@ -9,7 +9,7 @@ from bottle import Bottle, request, response, run, HTTPResponse
 
 app = Bottle()
 
-TEST_MODE = False
+test_mode = False
 
 clients = []
 messages = []
@@ -114,7 +114,7 @@ def add_message():
     client_id = int(client_id)
 
     result = ""
-    if not TEST_MODE:
+    if not test_mode:
         result = execute_task(data_val)
         print(
             f"add-message: задача {data_val!r} -> "
@@ -136,7 +136,7 @@ def add_message():
     }
     messages.append(message)
 
-    if not TEST_MODE:
+    if not test_mode:
         feedback_uid = get_next_uid("feedback")
         feedback = {
             "uid": feedback_uid,
@@ -251,7 +251,7 @@ if __name__ == "__main__":  # pragma: no cover
     parser.add_argument("--seed-file", type=str, default=None)
     args = parser.parse_args()
 
-    TEST_MODE = args.test_mode
+    test_mode = args.test_mode
 
     if args.seed_file:
         load_seed_data(args.seed_file)
