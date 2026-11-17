@@ -131,6 +131,16 @@ def add_message():
     }
     messages.append(message)
 
+    if not test_mode:
+        feedback_uid = get_next_uid("feedback")
+        feedback = {
+            "uid": feedback_uid,
+            "created": int(datetime.now().timestamp()),
+            "response": f"{result}",
+            "message": uid,
+        }
+        feedbacks.append(feedback)
+
     response.content_type = "application/json"
     return json.dumps(message)
 
