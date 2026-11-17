@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import pytest
 import threading
 import subprocess
@@ -85,7 +86,7 @@ class APIStateMachine(RuleBasedStateMachine):
         res = requests.get(
             f"{self.client.base_url}/rest/api/v2/collect-client"
         )
-        assert res.status_code == 406
+        assert res.status_code == HTTPStatus.NOT_ACCEPTABLE
 
     @rule()
     def test_bad_headers_415(self):
@@ -93,7 +94,7 @@ class APIStateMachine(RuleBasedStateMachine):
             f"{self.client.base_url}/rest/api/v2/add-client?user_agent=test",
             headers={"Accept-Language": "ru-RU", "Content-Type": "text/plain"},
         )
-        assert res.status_code == 415
+        assert res.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
 
     @rule()
     @precondition(lambda self: len(self.clients) > 0)
@@ -109,7 +110,7 @@ class APIStateMachine(RuleBasedStateMachine):
             json={"user_agent": "x"},
             headers=self.client.headers,
         )
-        assert r.status_code == 404
+        assert r.status_code == HTTPStatus.NOT_FOUND
 
     @rule()
     @precondition(lambda self: len(self.clients) > 0)
@@ -120,7 +121,7 @@ class APIStateMachine(RuleBasedStateMachine):
             json={},
             headers=self.client.headers,
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     @rule()
     def add_message_no_client(self):
@@ -128,7 +129,7 @@ class APIStateMachine(RuleBasedStateMachine):
             f"{self.client.base_url}/rest/api/v2/add-message?data=test",
             headers=self.client.headers,
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     @rule(stage=st.text(max_size=10))
     @precondition(lambda self: len(self.clients) > 0)
@@ -142,7 +143,7 @@ class APIStateMachine(RuleBasedStateMachine):
             json={"stage": "x"},
             headers=self.client.headers,
         )
-        assert r.status_code == 404
+        assert r.status_code == HTTPStatus.NOT_FOUND
 
     @rule()
     @precondition(lambda self: len(self.messages) > 0)
@@ -153,7 +154,7 @@ class APIStateMachine(RuleBasedStateMachine):
             json={},
             headers=self.client.headers,
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
 
 TestAPI = APIStateMachine.TestCase
@@ -176,7 +177,7 @@ def test_subprocess_success(data):
             "Content-Type": "application/json",
         },
     )
-    assert res.status_code == 200, res.text
+    assert res.status_code == HTTPStatus.OK, res.text
     cid = res.json()["uid"]
 
     app.test_mode = False
@@ -190,7 +191,7 @@ def test_subprocess_success(data):
                     "Content-Type": "application/json",
                 },
             )
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
             assert mock_run.called
     finally:
         app.test_mode = True
@@ -206,7 +207,7 @@ def test_subprocess_failure(data):
             "Content-Type": "application/json",
         },
     )
-    assert res.status_code == 200, res.text
+    assert res.status_code == HTTPStatus.OK, res.text
     cid = res.json()["uid"]
 
     app.test_mode = False
@@ -222,7 +223,7 @@ def test_subprocess_failure(data):
                     "Content-Type": "application/json",
                 },
             )
-            assert r.status_code == 500
+            assert r.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     finally:
         app.test_mode = True
 
@@ -255,7 +256,7 @@ def test_revise_message_success(stage):
             "Content-Type": "application/json",
         },
     )
-    assert r.status_code == 200
+    assert r.status_code == HTTPStatus.OK
     assert r.json()["stage"] == stage
 
 
@@ -287,4 +288,4 @@ def test_revise_message_empty_body(stage):
             "Content-Type": "application/json",
         },
     )
-    assert r.status_code == 400
+    assert r.status_code == HTTPStatus.BAD_REQUEST
