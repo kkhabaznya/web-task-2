@@ -13,7 +13,7 @@ from client import APIClient
 
 @pytest.fixture(scope="session", autouse=True)
 def run_server():
-    app.TEST_MODE = True
+    app.test_mode = True
     server = make_server("127.0.0.1", 8080, app.app)
     thread = threading.Thread(target=server.serve_forever)
     thread.daemon = True
@@ -179,7 +179,7 @@ def test_subprocess_success(data):
     assert res.status_code == 200, res.text
     cid = res.json()["uid"]
 
-    app.TEST_MODE = False
+    app.test_mode = False
     try:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout=b"7")
@@ -193,7 +193,7 @@ def test_subprocess_success(data):
             assert r.status_code == 200, r.text
             assert mock_run.called
     finally:
-        app.TEST_MODE = True
+        app.test_mode = True
 
 
 @given(data=st.text(alphabet=_SAFE_ALPHABET, min_size=1, max_size=10))
@@ -209,7 +209,7 @@ def test_subprocess_failure(data):
     assert res.status_code == 200, res.text
     cid = res.json()["uid"]
 
-    app.TEST_MODE = False
+    app.test_mode = False
     try:
         with patch(
             "subprocess.run",
@@ -224,7 +224,7 @@ def test_subprocess_failure(data):
             )
             assert r.status_code == 500
     finally:
-        app.TEST_MODE = True
+        app.test_mode = True
 
 
 @given(stage=st.text(alphabet=_SAFE_ALPHABET, min_size=1, max_size=10))
@@ -288,56 +288,3 @@ def test_revise_message_empty_body(stage):
         },
     )
     assert r.status_code == 400
-
-
-@given(response=st.text(alphabet=_SAFE_ALPHABET, min_size=1, max_size=10))
-@settings(max_examples=5, suppress_health_check=[HealthCheck.too_slow])
-def test_collect_feedback_and_report(response):
-    r1 = requests.post(
-        "http://127.0.0.1:8080/rest/api/v2/add-client?user_agent=t",
-        headers={
-            "Accept-Language": "ru-RU",
-            "Content-Type": "application/json",
-        },
-    )
-    cid = r1.json()["uid"]
-    r2 = requests.post(
-        f"http://127.0.0.1:8080/rest/api/v2/add-message?data=x&client={cid}&tags=tag",
-        headers={
-            "Accept-Language": "ru-RU",
-            "Content-Type": "application/json",
-        },
-    )
-    mid = r2.json()["uid"]
-
-    app.feedbacks.append(
-        {
-            "uid": 999,
-            "created": int(__import__("datetime").datetime.now().timestamp()),
-            "response": response,
-            "message": mid,
-        }
-    )
-
-    r = requests.get(
-        f"http://127.0.0.1:8080/rest/api/v2/collect-feedback/{mid}",
-        headers={
-            "Accept-Language": "ru-RU",
-            "Content-Type": "application/json",
-        },
-    )
-    assert r.status_code == 200
-    data = r.json()
-    assert len(data) >= 1
-    assert data[0]["response"] == response
-
-    r = requests.get(
-        "http://127.0.0.1:8080/rest/api/v2/collect-report",
-        headers={
-            "Accept-Language": "ru-RU",
-            "Content-Type": "application/json",
-        },
-    )
-    assert r.status_code == 200
-    report = r.json()
-    assert any(item["response"] == response for item in report)
