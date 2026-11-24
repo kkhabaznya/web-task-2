@@ -1,6 +1,7 @@
 import contextlib
 import io
 import sys
+import qrcode
 from datetime import datetime
 
 
@@ -50,36 +51,13 @@ feedback_list = []
 message_list = []
 client_list = []
 
-
-def run_task(code: str) -> str:
-    buffer = io.StringIO()
-    try:
-        with contextlib.redirect_stdout(buffer):
-            try:
-                result = eval(code)
-            except SyntaxError:
-                exec(code)
-    except Exception:
-        return code
-    printed = buffer.getvalue().rstrip("\n")
-    if printed:
-        return printed
-    if result is not None:
-        return str(result)
-    return code
-
-
-def main(argv: list) -> int:
-    with open(argv[1], "r", encoding="utf-8-sig") as task_file:
-        code = task_file.read()
-
-    print(run_task(code))
+def main(code: str) -> str:
+    img = qrcode.make(code)
+    img.save("../qr.png")
     return 0
-
 
 if __name__ == "__main__":
     try:
-        sys.exit(main(sys.argv))
+        sys.exit(main(sys.argv[1]))
     except Exception as error:
-        print(error, file=sys.stderr)
         sys.exit(1)

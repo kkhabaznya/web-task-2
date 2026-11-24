@@ -78,28 +78,19 @@ def revise_client(uid):
 
 
 def execute_task(data: str) -> str:
-    task_file = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".txt", delete=False, encoding="utf-8"
-    )
     try:
-        task_file.write(data)
-        task_file.close()
+        process = subprocess.run(
+            [sys.executable, MAIN_PATH, data],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise HTTPResponse(
+            status=500,
+            body=f"CLI execution failed: {e.stderr.decode('utf-8')}",
+        )
+    return process.stdout.decode("utf-8")
 
-        try:
-            process = subprocess.run(
-                [sys.executable, MAIN_PATH, task_file.name],
-                capture_output=True,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise HTTPResponse(
-                status=500,
-                body=f"CLI execution failed: {e.stderr.decode('utf-8')}",
-            )
-
-        return process.stdout.decode("utf-8").strip()
-    finally:
-        os.remove(task_file.name)
 
 
 @app.post("/rest/api/v2/add-message")
