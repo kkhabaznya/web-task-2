@@ -1,11 +1,12 @@
+import argparse
 import json
+import os
 import subprocess
 import sys
-import argparse
-import os
 import tempfile
 from datetime import datetime
-from bottle import Bottle, request, response, run, HTTPResponse
+
+from bottle import Bottle, HTTPResponse, request, response, run
 
 app = Bottle()
 
@@ -251,5 +252,5 @@ if __name__ == "__main__":  # pragma: no cover
     if args.seed_file:
         load_seed_data(args.seed_file)
 
-    print(f"Запуск сервера на http://127.0.0.1:8080")
+    print("Запуск сервера на http://127.0.0.1:8080")
     run(app, host="0.0.0.0", port=8080, reloader=False)

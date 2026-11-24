@@ -1,12 +1,14 @@
-from http import HTTPStatus
-import pytest
-import threading
 import subprocess
-import requests
-from unittest.mock import patch, MagicMock
+import threading
+from http import HTTPStatus
+from unittest.mock import MagicMock, patch
 from wsgiref.simple_server import make_server
-from hypothesis import settings, strategies as st, HealthCheck, given
-from hypothesis.stateful import RuleBasedStateMachine, rule, precondition
+
+import pytest
+import requests
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
+from hypothesis.stateful import RuleBasedStateMachine, precondition, rule
 
 import app
 from client import APIClient
@@ -185,7 +187,8 @@ def test_subprocess_success(data):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout=b"7")
             r = requests.post(
-                f"http://127.0.0.1:8080/rest/api/v2/add-message?data={data}&client={cid}",
+                "http://127.0.0.1:8080/rest/api/v2/add-message"
+                f"?data={data}&client={cid}",
                 headers={
                     "Accept-Language": "ru-RU",
                     "Content-Type": "application/json",
@@ -217,7 +220,8 @@ def test_subprocess_failure(data):
             side_effect=subprocess.CalledProcessError(1, "cmd", b"", b"error"),
         ):
             r = requests.post(
-                f"http://127.0.0.1:8080/rest/api/v2/add-message?data={data}&client={cid}",
+                "http://127.0.0.1:8080/rest/api/v2/add-message"
+                f"?data={data}&client={cid}",
                 headers={
                     "Accept-Language": "ru-RU",
                     "Content-Type": "application/json",
