@@ -53,7 +53,7 @@ client_list = []
 
 def main(code: str) -> str:
     img = qrcode.make(code)
-    img.save("../qr.png")
+    img.convert("RGB").save("../qr.pdf")
     return 0
 
 if __name__ == "__main__":
